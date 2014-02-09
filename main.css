@@ -1,0 +1,9 @@
+body {
+    width: 750px;
+}
+.popover {
+    max-width: none;
+}
+#popover {
+    width: 500px;
+}

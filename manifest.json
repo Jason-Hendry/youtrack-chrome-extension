@@ -1,0 +1,15 @@
+{
+    "manifest_version": 2,
+
+    "name": "YouTrack Timesheet",
+    "description": "",
+    "version": "1.0",
+
+    "permissions": [
+        "http://youtrack.smsglobal.local/"
+    ],
+    "browser_action": {
+        "default_icon": "favicon-h-1f354e58.ico",
+        "default_popup": "popup.html"
+    }
+}
