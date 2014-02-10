@@ -2,7 +2,7 @@ var smsglobal = smsglobal || {};
 smsglobal.youtrack = smsglobal.youtrack || {};
 
 (function(y) {
-    y.baseRestUrl = 'http://youtrack.smsglobal.local/rest/';
+    y.baseRestUrl = localStorage['url'].replace(/\/$/,'');
     y.init = function() {
         y.loadInProgress();
         $('#issues').on('mouseenter','td',null, y.cellHover);
@@ -15,7 +15,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             'html':true})
     };
     y.loadInProgress = function() {
-        $.getJSON(y.baseRestUrl+'issue?filter=%23me+%7BIn+Progress+-+On+Break%7D&filter=%23%7BIn+Progress%7D&max=100',{},y.drawSearchResults);
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter=%23me+%23%7BIn+Progress+-+On+Break%7D&filter=%23%7BIn+Progress%7D&max=100',{},y.drawSearchResults);
     };
     y.drawSearchResults = function(data) {
         $(data.searchResult).each(function(i, v) {
@@ -43,9 +43,13 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             }
             var $actions = $('<div class="btn-group"></div>')
                 .append(y.action('ok','Fixed', y.fixed, 'success'))
-                .append(y.action('cutlery','Take Break', y.break))
                 .append(y.action('resize-full','Split Task', y.split));
 
+            if(state == 'In Progress') {
+                $actions.append(y.action('cutlery','Take Break', y.break));
+            } else {
+                $actions.append(y.action('play','In Progress', y.progress));
+            }
             if(total > 1000) {
                 $actions.append(y.action('time','Clean timer and Re-Open', y.clearTimerReopen, 'danger'));
             }
@@ -109,27 +113,31 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         y.runCommand(y.fetchJobNumber(this),'state In Progress - On Break')
     }
     y.split = function() {
+
         var job = y.fetchJobNumber(this);
         y.getLinks(job, alert)
+    }
+    y.progress = function() {
+        y.runCommand(y.fetchJobNumber(this),'state In Progress')
     }
     y.clearTimerReopen = function() {
         y.runCommand(y.fetchJobNumber(this),'Timer time No timer time state open', 'Clear unclosed job timer')
     }
     y.createNewTask = function(project,summary, callback) {
         $.ajax({
-            'url': y.baseRestUrl+'issue',
+            'url': y.baseRestUrl+'/rest/issue',
             'data':{'project':project,'summary':summary},
             'success':function(data, status, xhr) { callback(xhr.getResponseHeader('Location').replace(/.*\/([^\/]*)$/, '$1')) }
         })
     }
-    y.runCommand = function(jpb, command, comment, callback) {
+    y.runCommand = function(job, command, comment, callback) {
         var data = {
-            'command': Command
+            'command': command
         };
         if(comment != undefined) {
             data['comment'] = comment;
         }
-        $.post(y.baseRestUrl+'issue/#/execute'.replace('#', job),data, callback ? callback : y.refresh);
+        $.post(y.baseRestUrl+'/rest/issue/#/execute'.replace('#', job),data, callback ? callback : y.refresh);
     }
     y.action = function(icon,title,callback,button) {
         var $a = $('<a></a>');
@@ -186,7 +194,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 $('#popover-links').append($('<div class="related">Related: '+v+'</div>'));
             })
         })
-        $.getJSON(y.baseRestUrl+'issue/#/link'.replace('#',y.fetchJobNumber(this)),{},function(data) {
+        $.getJSON(y.baseRestUrl+'/rest/issue/#/link'.replace('#',y.fetchJobNumber(this)),{},function(data) {
             text(JSON.stringify(data));
         });
 
@@ -199,7 +207,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         return job+' '+data.summary;
     }
     y.getLinks = function(job, callback) {
-        $.getJSON(y.baseRestUrl+'issue/#/link'.replace('#',job),{},function(data) {
+        $.getJSON(y.baseRestUrl+'/rest/issue/#/link'.replace('#',job),{},function(data) {
             var links = {
                 'parent': null,
                 'children': [],
