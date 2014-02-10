@@ -42,8 +42,8 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 $row.addClass('danger');
             }
             var $actions = $('<div class="btn-group"></div>')
-                .append(y.action('ok','Fixed', y.fixed, 'success'))
-                .append(y.action('resize-full','Split Task', y.split));
+                .append(y.action('ok','Fixed', y.fixed, 'success'));
+            //    .append(y.action('resize-full','Split Task', y.split));
 
             if(state == 'In Progress') {
                 $actions.append(y.action('cutlery','Take Break', y.break));
@@ -113,7 +113,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         y.runCommand(y.fetchJobNumber(this),'state In Progress - On Break')
     }
     y.split = function() {
-
+        var oldJobSummary = prompt("Rename current job")
         var job = y.fetchJobNumber(this);
         y.getLinks(job, alert)
     }
