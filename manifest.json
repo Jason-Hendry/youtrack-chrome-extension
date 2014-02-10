@@ -3,8 +3,8 @@
 
     "name": "YouTrack Timesheet",
     "description": "",
-    "version": "2.1",
-
+    "version": "1.0",
+    "icons": { "128": "youtrack128-h-407a6d56.png" },
     "permissions": [
         "http://*/"
     ],
