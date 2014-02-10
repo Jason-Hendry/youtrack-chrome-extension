@@ -55,7 +55,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             }
             $row.attr('id', v.id);
             $row.append($('<td></td>').attr('data','assignee').text(y.getField(v, 'assignee', 'fullName')));
-            $row.append($('<td></td>').attr('data','job').text(v.id+' '+ y.getField(v, 'summary').substr(0,20)));
+            $row.append($('<td></td>').attr('data','job').attr('title',v.id+' '+ y.getField(v, 'summary')).text(v.id+' '+ y.getField(v, 'summary').substr(0,20)));
             $row.append($('<td></td>').attr('data','state').text(state));
             $row.append($('<td></td>').attr('data','time').text(spent + minutes));
             $row.append($('<td></td>').append($actions));
