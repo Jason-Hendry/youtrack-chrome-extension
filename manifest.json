@@ -3,7 +3,7 @@
 
     "name": "YouTrack Timesheet",
     "description": "",
-    "version": "1.0",
+    "version": "1.0.1",
     "icons": { "128": "youtrack128-h-407a6d56.png" },
     "permissions": [
         "http://*/"
