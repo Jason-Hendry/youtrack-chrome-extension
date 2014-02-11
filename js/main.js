@@ -3,8 +3,12 @@ smsglobal.youtrack = smsglobal.youtrack || {};
 
 (function(y) {
     y.baseRestUrl = localStorage['url'].replace(/\/$/,'');
+    y.stateBreak = localStorage['break_state'];
+    y.stateInProgress = 'In Progress';
+    y.stateFixed = 'Fixed';
+    y.parent = null;
     y.init = function() {
-        y.loadInProgress();
+        y.loadJobs();
         $('#issues').on('mouseenter','td',null, y.cellHover);
         $('#issues').popover({
             'selector':'[data=job]',
@@ -14,8 +18,32 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             'container':'body',
             'html':true})
     };
-    y.loadInProgress = function() {
-        $.getJSON(y.baseRestUrl+'/rest/issue?filter=%23me+%23%7BIn+Progress+-+On+Break%7D&filter=%23%7BIn+Progress%7D&max=100',{},y.drawSearchResults);
+    y.loadJobs = function() {
+        if(y.parent == null) {
+            var currentTask = encodeURIComponent('#me State: {'+ y.stateInProgress+'} OR {'+ y.stateBreak+'}');
+            $.getJSON(y.baseRestUrl+'/rest/issue?filter='+currentTask,{},function(data) {
+                if(data.issue.length == 0) {
+                    y.parent = localStorage['parent'] ? localStorage['parent'] : 'None';
+                    y.loadJobs();
+                } else {
+                    y.getLinks(data.issue[0].id, function(links) {
+                        y.parent = links.parent ? links.parent : 'None';
+                        y.loadJobs();
+                    })
+                }
+            });
+            return;
+        }
+        localStorage['parent'] = y.parent;
+        var breakFilter = encodeURIComponent('#me #{'+y.stateBreak+'}');
+        var currentFilter = encodeURIComponent('#{'+y.stateInProgress+'}');
+        if(y.parent !== 'None') {
+
+            var subtaskFilter = '&filter='+encodeURIComponent('Subtask of: '+ y.parent+' State: -{'+ y.stateInProgress+'} -{'+ y.stateBreak+'}');
+        } else {
+            var subtaskFilter = '';
+        }
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+breakFilter+'&filter='+currentFilter+subtaskFilter+'&max=100',{},y.drawSearchResults);
     };
     y.drawSearchResults = function(data) {
         $(data.searchResult).each(function(i, v) {
@@ -41,18 +69,6 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             if(total > 30) {
                 $row.addClass('danger');
             }
-            var $actions = $('<div class="btn-group"></div>')
-                .append(y.action('ok','Fixed', y.fixed, 'success'));
-            //    .append(y.action('resize-full','Split Task', y.split));
-
-            if(state == 'In Progress') {
-                $actions.append(y.action('cutlery','Take Break', y.break));
-            } else {
-                $actions.append(y.action('play','In Progress', y.progress));
-            }
-            if(total > 1000) {
-                $actions.append(y.action('time','Clean timer and Re-Open', y.clearTimerReopen, 'danger'));
-            }
             $row.attr('id', v.id);
             $row.append($('<td></td>').attr('data','assignee').text(y.getField(v, 'assignee', 'fullName')));
             $row.append($('<td></td>')
@@ -62,6 +78,25 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 .append(' '+ y.getField(v, 'summary').substr(0,20)));
             $row.append($('<td></td>').attr('data','state').text(state));
             $row.append($('<td></td>').attr('data','time').text(spent + minutes));
+
+
+            // Action Links
+            var $actions = $('<div class="btn-group"></div>');
+            //    .append(y.action('resize-full','Split Task', y.split));
+
+            if(state == 'In Progress') {
+                $actions.append(y.action('ok','Fixed', y.fixed, 'success'));
+                $actions.append(y.action('cutlery','Take Break', y.break));
+            } else {
+                $actions.append(y.action('play',(state == y.stateBreak ? 'Resume' : 'Start'), y.progress, 'success'));
+            }
+            if(state == y.stateInProgress || state == y.stateBreak) {
+                $actions.append(y.action('chevron-left','Mark Open', y.open));
+            }
+            if(total > 1000) {
+                $actions.append(y.action('time','Clean timer and Re-Open', y.clearTimerReopen, 'danger'));
+            }
+
             $row.append($('<td></td>').append($actions));
             $('#issues').append($row);
         });
@@ -115,21 +150,25 @@ smsglobal.youtrack = smsglobal.youtrack || {};
     }
     y.refresh = function() {
         y.clear();
-        y.loadInProgress();
+        y.loadJobs();
     }
     y.fixed = function() {
-        y.runCommand(y.fetchJobNumber(this),'state Fixed')
+        y.runCommand(y.fetchJobNumber(this),'state Fixed');
+    }
+    y.open = function() {
+        y.runCommand(y.fetchJobNumber(this),'state Open');
     }
     y.break = function() {
-        y.runCommand(y.fetchJobNumber(this),'state In Progress - On Break')
+        y.runCommand(y.fetchJobNumber(this),'state '+ y.stateBreak);
     }
     y.split = function() {
-        var oldJobSummary = prompt("Rename current job")
+        var data = y.fetchJobData(this);
+        var oldJobSummary = prompt("Rename current job", data.summary);
         var job = y.fetchJobNumber(this);
         y.getLinks(job, alert)
     }
     y.progress = function() {
-        y.runCommand(y.fetchJobNumber(this),'state In Progress')
+        y.runCommand(y.fetchJobNumber(this),'for me state In Progress')
     }
     y.clearTimerReopen = function() {
         y.runCommand(y.fetchJobNumber(this),'Timer time No timer time state open', 'Clear unclosed job timer')

@@ -8,10 +8,18 @@
 <body>
 <div class="container">
     <h1>YouTrack Extension Options</h1>
+
+    <p>To track times more accurately add an on break state (eg In Progress - On Break). You will also need a modified
+        Work Time workflow that allows tracking all jobs marking in progress then changed to any other status</p>
+
     <form role="form">
         <div class="form-group">
             <label>YouTrack URL</label>
             <input class="form-control" name="url">
+        </div>
+        <div class="form-group">
+            <label>Break State</label>
+            <input class="form-control" name="break_state">
         </div>
         <input type="submit" class="btn btn-primary" value="Save">
     </form>
