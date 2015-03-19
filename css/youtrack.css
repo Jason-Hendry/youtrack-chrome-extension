@@ -1,0 +1,11 @@
+.sg-button {
+    line-height: 12px;
+    padding: 2px;
+    float:right;
+    margin-left: 3px;
+}
+
+.sg-in-progress {
+    color: #66cc6f;
+    font-weight: bold;
+}

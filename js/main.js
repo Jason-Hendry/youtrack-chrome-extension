@@ -7,12 +7,15 @@ smsglobal.youtrack = smsglobal.youtrack || {};
     y.stateInProgress = 'In Progress';
     y.stateFixed = 'Fixed';
     y.parent = null;
+    y.currentJobs = [];
+    y.currentStories = {};
+    y.currentSprint = '';
     y.init = function() {
         if(y.baseRestUrl == '' || y.stateBreak == '') {
             chrome.tabs.create({url: "options.html"});
             return false;
         }
-        y.loadJobs();
+        //y.loadJobs();
         $('#issues').on('mouseenter','td',null, y.cellHover);
         $('#issues').popover({
             'selector':'[data=job]',
@@ -20,8 +23,117 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             'content': y.jobDetailsPopover,
             'title': y.jobTitle,
             'container':'body',
-            'html':true})
+            'html':true});
+        y.getCurrentSprint(function(sprint){
+            y.currentSprint = sprint.version;
+            $('#sprint').text(sprint.version);
+            y.getCompletedInSprint(sprint.version, function(complete){
+                $('#sprintComplete').text(complete);
+            });
+        });
+        $('#active-taskboard').click(function(e) {
+            var stories = y.getCurrentStories();
+            e.preventDefault();
+            false;
+            var subTasksOf = stories.join(', ');
+            var storyTasks = stories.join(' OR #');
+            var q = encodeURIComponent('Subtask of: '+subTasksOf+' OR #'+storyTasks);
+
+            window.open('http://youtrack.smsglobal.local/rest/agile/Tasks%20Board-20/sprint/'+ y.currentSprint+'?q='+q);
+        });
+        y.getJobs('State: {'+ y.stateInProgress+'}',function(jobs){
+            for(var i in jobs) {
+                y.getLinks(jobs[i].getId(), function(links){
+                    if(links.parent) {
+                        y.currentStories[links.parent] = 1;
+                    }
+                })
+                $('#issues').append(jobs[i].renderTableRow())
+            }
+        });
     };
+    /**
+     * @param search string|array
+     * @param callback
+     */
+    y.getJobs = function(search, callback) {
+        var query = '';
+        var filter = '';
+        if(typeof search == 'object') {
+            var params = [];
+            for(var i in search) {
+                filter = encodeURIComponent(search[i]);
+                params.push('filter='+filter)
+            }
+            query = params.join('&');
+        } else {
+            filter = encodeURIComponent(search);
+            query = 'filter='+filter;
+        }
+        $.getJSON(y.baseRestUrl+'/rest/issue?max=100&'+query,{},function(data) {
+            if(data.searchResult !== undefined) {
+                var groups = [];
+                for(var j in data.searchResult) {
+                    var jobs = [];
+                    for(var i=0;i<data.searchResult[j].issues.length;i++) {
+                        jobs.push(new y.job(data.searchResult[j].issues[i]));
+                    }
+                    groups.push(jobs);
+                }
+                callback(groups);
+            } else {
+                var jobs = [];
+                for(var i=0;i<data.issue.length;i++) {
+                    jobs.push(new y.job(data.issue[i]));
+                }
+                callback(jobs);
+            }
+        });
+    }
+    y.log = function(msg) {
+        var $pre = $('<pre>',{text:msg});
+        $('body').append($pre);
+    }
+    y.totalSprints = 0;
+    y.sprints = [];
+    y.getSprints = function(callback) {
+        $.getJSON(y.baseRestUrl+'/rest/admin/agile/Agile+Board-21',function(data) {
+            if(!data.sprints) {
+                return false;
+            }
+            y.totalSprints = data.sprints.length;
+            for(var i = 0; i< y.totalSprints; i++) {
+                $.getJSON(y.baseRestUrl+'/rest/admin/agile/Agile+Board-21/sprint/'+data.sprints[i].id,function(sprint) {
+                    y.sprints.push(sprint);
+                    if(y.sprints.length == y.totalSprints) {
+                        callback(y.sprints);
+                    }
+                });
+            }
+        });
+    };
+    y.getCurrentSprint = function(callback) {
+        var now = new Date();
+        y.getSprints(function(sprints){
+            for(var i = 0; i< sprints.length;i++) {
+                if(sprints[i].start < now && sprints[i].finish > now) {
+                    callback(sprints[i]);
+                }
+            }
+        })
+    };
+    y.getCurrentStories = function() {
+        var stories = [];
+       for(var i in y.currentStories) {
+           stories.push(i);
+       }
+        return stories;
+    };
+    y.getCompletedInSprint = function(sprint, callback) {
+        y.getJobs(['#'+sprint+' #Story #unresolved','#'+sprint+' #Story #resolved'], function(jobs) {
+            callback(Math.round(jobs[1].length/(jobs[0].length+jobs[1].length)*100, 1));
+        });
+    }
     y.loadJobs = function() {
         if(y.parent == null) {
             var currentTask = encodeURIComponent('#me State: {'+ y.stateInProgress+'}');
@@ -57,20 +169,39 @@ smsglobal.youtrack = smsglobal.youtrack || {};
     }
     y.drawIssues = function(data) {
         $(data.issues).each(function(i, v) {
-           var timer = parseInt(y.getField(v, 'Timer time'));
-           var minutes = 0;
-           var spent = 0;
-           var state = y.getField(v, 'state');
-           if(timer > 0 && state == 'In Progress') {
-               var now = new Date().getTime();
-               minutes = Math.round((now - timer) / 1000 / 60);
-           }
+
+
+        });
+    };
+
+    y.job = function(data) {
+        this.data = data;
+        this.getId = function() {
+            return this.data.id;
+        }
+        this.state = function() {
+            return y.getField(this.data, 'state');
+        }
+        this.time = function() {
+            var v = this.data;
+            var timer = parseInt(y.getField(v, 'Timer time'));
+            var minutes = 0;
+            var spent = 0;
+            var state = y.getField(v, 'state');
+            if(timer > 0 && this.state() == 'In Progress') {
+                var now = new Date().getTime();
+                minutes = Math.round((now - timer) / 1000 / 60);
+            }
             if(parseInt(y.getField(v, 'spent time'))) {
                 spent = parseInt(y.getField(v, 'spent time'));
             }
-           var total = minutes + spent;
-           var $row = $('<tr></tr>');
+            return minutes + spent;
+        }
+        this.renderTableRow = function() {
+            var v = this.data;
+            var $row = $('<tr></tr>');
             $row.data(y.issueToData(v));
+            var total = this.time();
             if(total > 30) {
                 $row.addClass('danger');
             }
@@ -81,20 +212,20 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 .attr('title',v.id+' '+ y.getField(v, 'summary'))
                 .append(y.issueLink(v.id))
                 .append(' '+ y.getField(v, 'summary').substr(0,20)));
-            $row.append($('<td></td>').attr('data','state').text(state));
-            $row.append($('<td></td>').attr('data','time').text(spent + minutes));
+            $row.append($('<td></td>').attr('data','state').text(this.state()));
+            $row.append($('<td></td>').attr('data','time').text(total));
 
 
             // Action Links
             var $actions = $('<div class="btn-group"></div>');
 
-            if(state == 'In Progress') {
+            if(this.state() == 'In Progress') {
                 $actions.append(y.action('ok','Fixed', y.fixed, 'success'));
                 $actions.append(y.action('cutlery','Take Break', y.break));
             } else {
-                $actions.append(y.action('play',(state == y.stateBreak ? 'Resume' : 'Start'), y.progress, 'success'));
+                $actions.append(y.action('play',(this.state() == y.stateBreak ? 'Resume' : 'Start'), y.progress, 'success'));
             }
-            if(state == y.stateInProgress || state == y.stateBreak) {
+            if(this.state() == y.stateInProgress || this.state() == y.stateBreak) {
                 $actions.append(y.action('chevron-left','Mark Open', y.open));
             }
             if(total > 1000) {
@@ -103,9 +234,10 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             $actions.append(y.action('plus','Create New Task under Parent', y.split));
 
             $row.append($('<td></td>').append($actions));
-            $('#issues').append($row);
-        });
-    };
+            return $row;
+        }
+    }
+
     y.issueLink = function(issue) {
         $a = $('<a></a>');
         $a.text(issue);
@@ -323,5 +455,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
     }
 
 })(smsglobal.youtrack);
+
+
 
 $(document).ready(smsglobal.youtrack.init);
