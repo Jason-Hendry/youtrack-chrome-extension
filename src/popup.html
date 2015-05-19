@@ -5,24 +5,50 @@
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <td colspan="5">
-            Sprint <span id="sprint"></span> - <span id="sprintComplete"></span>% Completed <a href="" id="active-taskboard" class="btn btn-xs btn-info">Active Taskboard</a>
-        </td>
-    </tr>
-    <tr>
-        <th>Assignee</th>
-        <th>Issue</th>
-        <th>Status</th>
-        <th>Time</th>
-        <th>&nbsp;</th>
-    </tr>
-    </thead>
-    <tbody id="issues">
-    </tbody>
-</table>
+
+<div role="tabpanel">
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#inProgress" aria-controls="inProgress" role="tab" data-toggle="tab">In Progress</a></li>
+        <li role="presentation"><a href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
+        <li role="presentation"><a href="#scoreboard" aria-controls="scoreboard" role="tab" data-toggle="tab">Scoreboard</a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="inProgress">
+
+            <table class="table table-striped">
+
+                <thead>
+                <tr>
+                    <th>Assignee</th>
+                    <th>Issue</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody id="issues">
+                </tbody>
+            </table>
+
+
+        </div>
+        <div role="tabpanel" class="tab-pane" id="daily">
+            <pre></pre>
+
+
+        </div>
+        <div role="tabpanel" class="tab-pane" id="scoreboard">
+            <pre></pre>
+
+        </div>
+    </div>
+
+</div>
+
 
 <script src="js/jquery.js" type="application/javascript"></script>
 <script src="js/bootstrap.min.js" type="application/javascript"></script>

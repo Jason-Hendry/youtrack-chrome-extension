@@ -51,6 +51,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 $('#issues').append(jobs[i].renderTableRow())
             }
         });
+        y.loadDaily();
     };
     /**
      * @param search string|array
@@ -453,6 +454,136 @@ smsglobal.youtrack = smsglobal.youtrack || {};
     y.fetchJobData = function(elem) {
         return $(elem).closest('tr').data();
     }
+
+
+
+    y.loadDaily = function() {
+
+        if(localStorage["youtrackParent"] != undefined && localStorage["youtrackParent"][0] == '{') {
+            var youtrackParent = JSON.parse(localStorage["youtrackParent"]);
+        } else {
+            var youtrackParent = {};
+        }
+
+        if(localStorage["workTimes"] != undefined && localStorage["workTimes"][0] == '{') {
+            var workTimes = JSON.parse(localStorage["workTimes"]);
+        } else {
+        }
+        var workTimes = {};
+
+        if(localStorage["users"] != undefined && localStorage["users"][0] == '{') {
+            var users = JSON.parse(localStorage["users"]);
+        } else {
+            var users = {};
+        }
+
+        var times = {};
+
+        var updatedToday = encodeURIComponent('updated: Today Project: -SD');
+        var done = 0;
+        console.log('Done', done);
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+updatedToday+'&max=500&with=spent+time',{},function(data) {
+            for(i=0;i<data.issue.length;i++) {
+                var issueId = data.issue[i].id;
+                for(j=0;j<data.issue[i].field.length;j++) {
+                    if (data.issue[i].field[j].name == 'Spent time' && data.issue[i].field[j].value[0] > 0) {
+                        var spentTime = data.issue[i].field[j].value[0];
+                        if(workTimes[issueId] == undefined) {
+                            workTimes[issueId] = {"time": 0, "items": []};
+                        }
+                        if(workTimes[issueId].time != data.issue[i].field[j].value[0]) {
+                            done++;
+                            var xhr = $.getJSON(y.baseRestUrl + '/rest/issue/' + issueId + '/timetracking/workitem', {}, function (data, status, xhr) {
+                                workTimes[xhr.issueId].items = [];
+                                for (k = 0; k < data.length; k++) {
+                                    if(users[data[k].author.login] == undefined) {
+                                        $.getJSON(data[k].author.url,{},function(data) {
+                                           //console.log('author', data);
+                                            users[data.login] = {
+                                                "avatar": data.avatarUrl ? (data.avatarUrl[0] == '/' ? y.baseRestUrl+data.avatarUrl : data.avatarUrl) : '',
+                                                "name": data.fullName,
+                                                "email": data.email
+                                            };
+                                            localStorage["users"] = JSON.stringify(users);
+                                        });
+                                    }
+                                    workTimes[xhr.issueId].items.push({
+                                        "author": data[k].author.login,
+                                        "start": new Date(data[k].date),
+                                        "end": new Date(data[k].date+(data[k].duration*1000*60)),
+                                        "duration": data[k].duration
+                                    });
+
+                                }
+                                workTimes[xhr.issueId].time = xhr.spentTime;
+                                localStorage["workTimes"] = JSON.stringify(workTimes);
+                                done--;
+                                if(done == 0) {
+                                    y.generateDailyReport(workTimes, youtrackParent);
+                                }
+                            });
+                            xhr.issueId = issueId;
+                            xhr.spentTime = spentTime;
+                        }
+                        
+                        if(youtrackParent[issueId] == undefined) {
+                            done++;
+                            $.getJSON(y.baseRestUrl + '/rest/issue/' + issueId + '/link', {}, function (data) {
+                                for (k = 0; k < data.length; k++) {
+                                    if (data[k].typeInward == 'subtask of') {
+                                        youtrackParent[data[k].target] = data[k].source;
+                                        localStorage["youtrackParent"] = JSON.stringify(youtrackParent);
+                                    }
+                                }
+                                done--;
+                                if(done == 0) {
+                                    y.generateDailyReport(workTimes, youtrackParent);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    y.generateDailyReport = function(worktimes,parents)
+    {
+        var start = Date.now();
+        start.setTime(0,0,0);
+        var end = Date.now();
+        end.setTime(0,0,0);
+
+        var jobs = {};
+        for(wId in worktimes) {
+            var issueId = parents[wId] != undefined ? parents[wId] : wId;
+            console.log(wId, issueId, worktimes[wId]);
+            for(j=0;j<worktimes[wId].items.length;j++) {
+                console.log(worktimes[wId].items[j].start, end, worktimes[wId].items[j].end, start)
+                if(worktimes[wId].items[j].start < end && worktimes[wId].items[j].end > start) {
+                    if(jobs[issueId] == undefined) {
+                        jobs[issueId] = {
+                            "total ": worktimes[wId].items[j].duration,
+                            "items": [worktimes[wId].items[j]]
+                        }
+                    } else {
+                        jobs[issueId].total += worktimes[wId].items[j].duration;
+                        jobs[issueId].items.push(worktimes[wId].items[j]);
+                    }
+                }
+            }
+        }
+        console.log(jobs,worktimes,parents);
+    }
+
+    y.scoreBoard = function() {
+        var allSprint = encodeURIComponent('#{Current Sprint}');
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+allSprint+'&max=500',{},function(data) {
+            $('#scoreboard pre').text(allSprint);
+            console.log(data);
+        });
+    }
+
 
 })(smsglobal.youtrack);
 
