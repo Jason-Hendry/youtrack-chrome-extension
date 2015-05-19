@@ -3,7 +3,7 @@
 
     "name": "YouTrack Timesheet",
     "description": "",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "icons": { "128": "youtrack128-h-407a6d56.png" },
     "permissions": [
         "http://*/",
@@ -15,9 +15,9 @@
     },
     "content_scripts": [
       {
-        "matches": ["http://youtrack.smsglobal.com/*"],
-        "js": ["js/jquery.js", "js/youtrack.js"],
-        "css": ["css/youtrack.css"]
+        "matches": ["http://*/*"],
+        "js": ["js/jquery.js", "js/youtrack.js", "js/gitlab.js"],
+        "css": ["css/youtrack.css","css/issue.css"]
       }
     ],
     "background": {

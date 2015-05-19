@@ -7,3 +7,7 @@ body {
 #popover {
     width: 500px;
 }
+
+input[type=submit] {
+    margin-right: 20px;
+}
