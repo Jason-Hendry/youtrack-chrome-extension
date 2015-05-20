@@ -20,7 +20,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         for(var i=0;i<authorColors.length;i++) {
             if(y.trim(authorColors[i]) == '') {continue;}
             var parts = authorColors[i].split(':');
-            authorCss += '#daily-chart .'+ y.trim(parts[0])+' { background-color: '+ y.trim(parts[1])+'; }\n';
+            authorCss += '#daily-chart .'+ y.trim(parts[0]).replace(/[^a-zA-Z]/,'_')+' { background-color: '+ y.trim(parts[1])+'; }\n';
         }
         $('head').append($('<style type="text/css">'+authorCss+'</style>'));
 
@@ -61,6 +61,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             }
         });
         y.loadDaily();
+        
     };
     /**
      * @param search string|array
@@ -675,7 +676,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 var newTime = $('<span></span>');
                 newTime.attr('title',jobs[jobId].items[j].author);
                 newTime.html('&nbsp;')
-                newTime.addClass(jobs[jobId].items[j].author);
+                newTime.addClass(jobs[jobId].items[j].author.replace(/[^a-zA-Z]/,'_'));
                 newTime.width((jobs[jobId].items[j].duration /max * (chartWidth-minWidth)));
                 item.append(newTime);
             }

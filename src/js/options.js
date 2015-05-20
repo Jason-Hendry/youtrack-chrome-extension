@@ -9,7 +9,7 @@ function save_options() {
 function restore_options() {
     $('[name=url]').val(localStorage["url"]);
     $('[name=gitlab-url]').val(localStorage["gitlab-url"]);
-    $('[name=author_css]').val(localStorage["authorCss"]);
+    $('[name=author_colours]').val(localStorage["authorColors"]);
     var break_state = localStorage["break_state"];
     $('[name=break_state]').val(break_state ? break_state : 'In Progress - On Break');
 }
