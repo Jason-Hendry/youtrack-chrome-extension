@@ -22,14 +22,15 @@ input[type=submit] {
     position: relative;
     margin: 1px;
     background-color: #28a4c9;
-    width: 100px;
+    width: 250px;
     color: #fff;
     font-weight: bold;
     font-size: 12px;
     padding: 2px;
     display: block;
     float: left;
-
+    overflow: hidden;
+    white-space: nowrap;
 }
 #daily-chart span {
     margin-left: 0;
