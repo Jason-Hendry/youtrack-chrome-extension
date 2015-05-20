@@ -2,12 +2,14 @@ function save_options() {
     localStorage["url"] = $('[name=url]').val();
     localStorage["gitlab-url"] = $('[name=gitlab-url]').val();
     localStorage["break_state"] = $('[name=break_state]').val();
+    localStorage["authorColors"] = $('[name=author_colours]').val();
     $('input[value=Save]').text('Saved');
 }
 
 function restore_options() {
     $('[name=url]').val(localStorage["url"]);
     $('[name=gitlab-url]').val(localStorage["gitlab-url"]);
+    $('[name=author_css]').val(localStorage["authorCss"]);
     var break_state = localStorage["break_state"];
     $('[name=break_state]').val(break_state ? break_state : 'In Progress - On Break');
 }

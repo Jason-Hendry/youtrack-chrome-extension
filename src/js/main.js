@@ -15,6 +15,15 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             chrome.tabs.create({url: "options.html"});
             return false;
         }
+        var authorColors = (localStorage['authorColors'] || '').split('\n');
+        var authorCss = '';
+        for(var i=0;i<authorColors.length;i++) {
+            if(y.trim(authorColors[i]) == '') {continue;}
+            var parts = authorColors[i].split(':');
+            authorCss += '#daily-chart .'+ y.trim(parts[0])+' { background-color: '+ y.trim(parts[1])+'; }\n';
+        }
+        $('head').append($('<style type="text/css">'+authorCss+'</style>'));
+
         //y.loadJobs();
         $('#issues').on('mouseenter','td',null, y.cellHover);
         $('#issues').popover({
@@ -27,7 +36,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         y.getCurrentSprint(function(sprint){
             y.currentSprint = sprint.version;
             $('#sprint').text(sprint.version);
-            y.getCompletedInSprint(sprint.version, function(complete){
+            y.getCompletedInSprint(sprint.version, function(complete) {
                 $('#sprintComplete').text(complete);
             });
         });
@@ -130,6 +139,9 @@ smsglobal.youtrack = smsglobal.youtrack || {};
        }
         return stories;
     };
+    y.trim = function(str) {
+        return str.replace(/^\s+/,'').replace(/\s+$/,'');
+    }
     y.getCompletedInSprint = function(sprint, callback) {
         y.getJobs(['#'+sprint+' #Story #unresolved','#'+sprint+' #Story #resolved'], function(jobs) {
             callback(Math.round(jobs[1].length/(jobs[0].length+jobs[1].length)*100, 1));
@@ -465,6 +477,12 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             var youtrackParent = {};
         }
 
+        if(localStorage["issueSummary"] != undefined && localStorage["issueSummary"][0] == '{') {
+            var issueSummary = JSON.parse(localStorage["issueSummary"]);
+        } else {
+            var issueSummary = {};
+        }
+
         if(localStorage["workTimes"] != undefined && localStorage["workTimes"][0] == '{') {
             var workTimes = JSON.parse(localStorage["workTimes"]);
         } else {
@@ -479,16 +497,20 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             var users = {};
         }
 
+        var states = {};
+
         var updatedToday = encodeURIComponent('updated: Today Project: -SD');
         var withFields = encodeURIComponent('Spent time');
         var done = 0;
         var fullyCached = true;
         // console.log('Done', done);
 
-        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+updatedToday+'&max=500&with='+withFields,{},function(data) {
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+updatedToday+'&max=500&with=Spent+time&with=State&with=Summary',{},function(data) {
 
             for(i=0;i<data.issue.length;i++) {
                 var issueId = data.issue[i].id;
+                issueSummary[issueId] = y.getFromField(data.issue[i],'summary');
+                states[issueId] = y.getFromField(data.issue[i],'State');
                 for(j=0;j<data.issue[i].field.length;j++) {
                     if (data.issue[i].field[j].name == 'Spent time' && data.issue[i].field[j].value[0] > 0) {
                         var spentTime = data.issue[i].field[j].value[0];
@@ -524,7 +546,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                                 localStorage["workTimes"] = JSON.stringify(workTimes);
                                 done--;
                                 if(done == 0) {
-                                    y.generateDailyReport(workTimes, youtrackParent);
+                                    y.generateDailyReport(workTimes, youtrackParent, issueSummary, states);
                                 }
                             });
                             xhr.issueId = issueId;
@@ -539,11 +561,18 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                                     if (data[k].typeInward == 'subtask of') {
                                         youtrackParent[data[k].target] = data[k].source;
                                         localStorage["youtrackParent"] = JSON.stringify(youtrackParent);
+                                        if(issueSummary[data[k].source] == undefined) {
+                                            issueSummary[data[k].source] = '';
+                                            $.getJSON(y.baseRestUrl + '/rest/issue/'+data[k].source,{},function(data) {
+                                                issueSummary[data.id] = y.getFromField(data,'summary');
+                                                localStorage["issueSummary"] = JSON.stringify(issueSummary);
+                                            });
+                                        }
                                     }
                                 }
                                 done--;
                                 if(done == 0) {
-                                    y.generateDailyReport(workTimes, youtrackParent);
+                                    y.generateDailyReport(workTimes, youtrackParent, issueSummary, states);
                                 }
                             });
                         }
@@ -551,12 +580,24 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 }
             }
             if(fullyCached) {
-                y.generateDailyReport(workTimes, youtrackParent);
+                y.generateDailyReport(workTimes, youtrackParent, issueSummary, states);
             }
         });
     };
 
-    y.generateDailyReport = function(worktimes,parents)
+    y.getFromField = function(data,field) {
+        for(var l=0;l<data.field.length;l++) {
+            if(data.field[l].name == field) {
+                if(typeof data.field[l].value == 'string') {
+                    return data.field[l].value;
+                } else {
+                    return data.field[l].value[0];
+                }
+            }
+        }
+    }
+
+    y.generateDailyReport = function(worktimes, parents, issueSummary, states)
     {
         // YouTrack Timezone
         var now = moment().tz('Australia/Melbourne');
@@ -620,15 +661,24 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         }
         var sortedJobs = y.sortObj(jobs);
 
-        console.log('sorted', sortedJobs);
-
-
         for(var i=0;i<sortedJobs.length;i++) {
             var jobId = sortedJobs[i];
-            var item = $('<a target="_blank">');
-            item.text(jobId+' '+jobs[jobId].total+'m');
-            item.attr('href', y.baseRestUrl+'/issue/'+jobId);
-            item.width((jobs[jobId].total/max * (chartWidth-minWidth)) + minWidth);
+            var link = $('<a target="_blank">');
+            var item = $('<div></div>');
+            item.append(link);
+            link.text(jobId+' '+jobs[jobId].total+'m');
+            link.attr('href', y.baseRestUrl+'/issue/'+jobId);
+            if(issueSummary[jobId]) {
+                item.attr('title',issueSummary[jobId]);
+            }
+            for(var j=0;j<jobs[jobId].items.length;j++) {
+                var newTime = $('<span></span>');
+                newTime.attr('title',jobs[jobId].items[j].author);
+                newTime.html('&nbsp;')
+                newTime.addClass(jobs[jobId].items[j].author);
+                newTime.width((jobs[jobId].items[j].duration /max * (chartWidth-minWidth)));
+                item.append(newTime);
+            }
             chart.append(item);
         }
     };
@@ -637,13 +687,11 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         var allSprint = encodeURIComponent('#{Current Sprint}');
         $.getJSON(y.baseRestUrl+'/rest/issue?filter='+allSprint+'&max=500',{},function(data) {
             $('#scoreboard pre').text(allSprint);
-            console.log(data);
         });
     };
 
     y.sortObj = function(obj) {
         var sortArray = [];
-
         for(var i in obj) {
             if(!obj.hasOwnProperty(i)) { continue; }
             var added = false;
