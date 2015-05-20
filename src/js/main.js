@@ -625,9 +625,9 @@ smsglobal.youtrack = smsglobal.youtrack || {};
 
         for(var i=0;i<sortedJobs.length;i++) {
             var jobId = sortedJobs[i];
-            var item = $('<a>');
+            var item = $('<a target="_blank">');
             item.text(jobId+' '+jobs[jobId].total+'m');
-            item.attr('href', y.baseRestUrl+'/issue/'+i);
+            item.attr('href', y.baseRestUrl+'/issue/'+jobId);
             item.width((jobs[jobId].total/max * (chartWidth-minWidth)) + minWidth);
             chart.append(item);
         }
