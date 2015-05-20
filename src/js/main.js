@@ -447,13 +447,13 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             });
             callback(links, params);
         });
-    }
+    };
     y.fetchJobNumber = function(elem) {
         return $(elem).closest('tr').attr('id');
-    }
+    };
     y.fetchJobData = function(elem) {
         return $(elem).closest('tr').data();
-    }
+    };
 
 
 
@@ -468,8 +468,10 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         if(localStorage["workTimes"] != undefined && localStorage["workTimes"][0] == '{') {
             var workTimes = JSON.parse(localStorage["workTimes"]);
         } else {
+            var workTimes = {};
         }
-        var workTimes = {};
+        var times = {};
+
 
         if(localStorage["users"] != undefined && localStorage["users"][0] == '{') {
             var users = JSON.parse(localStorage["users"]);
@@ -477,12 +479,14 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             var users = {};
         }
 
-        var times = {};
-
         var updatedToday = encodeURIComponent('updated: Today Project: -SD');
+        var withFields = encodeURIComponent('Spent time');
         var done = 0;
-        console.log('Done', done);
-        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+updatedToday+'&max=500&with=spent+time',{},function(data) {
+        var fullyCached = true;
+        // console.log('Done', done);
+
+        $.getJSON(y.baseRestUrl+'/rest/issue?filter='+updatedToday+'&max=500&with='+withFields,{},function(data) {
+
             for(i=0;i<data.issue.length;i++) {
                 var issueId = data.issue[i].id;
                 for(j=0;j<data.issue[i].field.length;j++) {
@@ -493,6 +497,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                         }
                         if(workTimes[issueId].time != data.issue[i].field[j].value[0]) {
                             done++;
+                            fullyCache = false;
                             var xhr = $.getJSON(y.baseRestUrl + '/rest/issue/' + issueId + '/timetracking/workitem', {}, function (data, status, xhr) {
                                 workTimes[xhr.issueId].items = [];
                                 for (k = 0; k < data.length; k++) {
@@ -509,8 +514,8 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                                     }
                                     workTimes[xhr.issueId].items.push({
                                         "author": data[k].author.login,
-                                        "start": new Date(data[k].date),
-                                        "end": new Date(data[k].date+(data[k].duration*1000*60)),
+                                        "start": data[k].date-(data[k].duration*1000*60),
+                                        "end": data[k].date,
                                         "duration": data[k].duration
                                     });
 
@@ -528,6 +533,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                         
                         if(youtrackParent[issueId] == undefined) {
                             done++;
+                            fullyCache = false;
                             $.getJSON(y.baseRestUrl + '/rest/issue/' + issueId + '/link', {}, function (data) {
                                 for (k = 0; k < data.length; k++) {
                                     if (data[k].typeInward == 'subtask of') {
@@ -544,37 +550,88 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                     }
                 }
             }
+            if(fullyCached) {
+                y.generateDailyReport(workTimes, youtrackParent);
+            }
         });
-    }
+    };
 
     y.generateDailyReport = function(worktimes,parents)
     {
-        var start = Date.now();
-        start.setTime(0,0,0);
-        var end = Date.now();
-        end.setTime(0,0,0);
+        // YouTrack Timezone
+        var now = moment().tz('Australia/Melbourne');
+
+        now.hour(0);
+        now.minute(0);
+        now.second(0);
+        now.millisecond(0);
+
+        var startTime = now.valueOf();
+
+        now.hour(23);
+        now.minute(59);
+        now.second(59);
+        now.millisecond(999);
+
+        var endTime = now.valueOf();
+
+        console.log('start',startTime);
+        console.log('end',endTime);
 
         var jobs = {};
+        var todayTimes = 0;
         for(wId in worktimes) {
+            if(!worktimes.hasOwnProperty(wId)) { continue; }
             var issueId = parents[wId] != undefined ? parents[wId] : wId;
-            console.log(wId, issueId, worktimes[wId]);
+            issueId = parents[issueId] != undefined ? parents[issueId] : issueId;
             for(j=0;j<worktimes[wId].items.length;j++) {
-                console.log(worktimes[wId].items[j].start, end, worktimes[wId].items[j].end, start)
-                if(worktimes[wId].items[j].start < end && worktimes[wId].items[j].end > start) {
+                if(worktimes[wId].items[j].start <= endTime && worktimes[wId].items[j].end >= startTime) {
+                    todayTimes++;
+                    var time = parseInt(worktimes[wId].items[j].duration);
+                    if(isNaN(time)) {
+                        time = 0;
+                    }
                     if(jobs[issueId] == undefined) {
                         jobs[issueId] = {
-                            "total ": worktimes[wId].items[j].duration,
+                            "total": time,
                             "items": [worktimes[wId].items[j]]
                         }
                     } else {
-                        jobs[issueId].total += worktimes[wId].items[j].duration;
+                        jobs[issueId].total = jobs[issueId].total + time;
                         jobs[issueId].items.push(worktimes[wId].items[j]);
                     }
                 }
             }
         }
         console.log(jobs,worktimes,parents);
-    }
+        $('#dailyTasksUpdated').text(todayTimes);
+        var chart = $('#daily-chart');
+        chart.html('');
+
+        var chartWidth = chart.width()*0.95;
+        var minWidth = 100;
+
+        var max = 0;
+        for(var i in jobs) {
+            if (!jobs.hasOwnProperty(i)) {
+                continue;
+            }
+            max = jobs[i].total > max ? jobs[i].total : max;
+        }
+        var sortedJobs = y.sortObj(jobs);
+
+        console.log('sorted', sortedJobs);
+
+
+        for(var i=0;i<sortedJobs.length;i++) {
+            var jobId = sortedJobs[i];
+            var item = $('<a>');
+            item.text(jobId+' '+jobs[jobId].total+'m');
+            item.attr('href', y.baseRestUrl+'/issue/'+i);
+            item.width((jobs[jobId].total/max * (chartWidth-minWidth)) + minWidth);
+            chart.append(item);
+        }
+    };
 
     y.scoreBoard = function() {
         var allSprint = encodeURIComponent('#{Current Sprint}');
@@ -582,8 +639,28 @@ smsglobal.youtrack = smsglobal.youtrack || {};
             $('#scoreboard pre').text(allSprint);
             console.log(data);
         });
-    }
+    };
 
+    y.sortObj = function(obj) {
+        var sortArray = [];
+
+        for(var i in obj) {
+            if(!obj.hasOwnProperty(i)) { continue; }
+            var added = false;
+            for(var j=0;j<sortArray.length;j++) {
+                if(obj[i].total > obj[sortArray[j]].total) {
+                    added = true;
+                    sortArray.splice(j,0,i);
+                    break;
+                }
+            }
+            if(!added) {
+                sortArray.push(i);
+            }
+        }
+
+        return sortArray;
+    }
 
 })(smsglobal.youtrack);
 

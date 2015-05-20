@@ -10,14 +10,14 @@
 
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#inProgress" aria-controls="inProgress" role="tab" data-toggle="tab">In Progress</a></li>
-        <li role="presentation"><a href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
+        <li role="presentation"><a href="#inProgress" aria-controls="inProgress" role="tab" data-toggle="tab">In Progress</a></li>
+        <li role="presentation" class="active"><a href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
         <li role="presentation"><a href="#scoreboard" aria-controls="scoreboard" role="tab" data-toggle="tab">Scoreboard</a></li>
     </ul>
 
     <!-- Tab panes -->
     <div class="tab-content">
-        <div role="tabpanel" class="tab-pane active" id="inProgress">
+        <div role="tabpanel" class="tab-pane" id="inProgress">
 
             <table class="table table-striped">
 
@@ -36,10 +36,11 @@
 
 
         </div>
-        <div role="tabpanel" class="tab-pane" id="daily">
-            <pre></pre>
+        <div role="tabpanel" class="tab-pane active" id="daily">
+            Tasks Updated Today: <em id="dailyTasksUpdated"></em>
+            <div id="daily-chart">
 
-
+            </div>
         </div>
         <div role="tabpanel" class="tab-pane" id="scoreboard">
             <pre></pre>
@@ -51,6 +52,10 @@
 
 
 <script src="js/jquery.js" type="application/javascript"></script>
+
+<script src="js/moment.min.js" type="application/javascript"></script>
+<script src="js/moment-timezone-with-data-2010-2020.min.js" type="application/javascript"></script>
+
 <script src="js/bootstrap.min.js" type="application/javascript"></script>
 <script src="js/main.js" type="application/javascript"></script>
 </body>

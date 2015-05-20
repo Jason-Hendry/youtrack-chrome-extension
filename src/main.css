@@ -11,3 +11,16 @@ body {
 input[type=submit] {
     margin-right: 20px;
 }
+
+
+#daily-chart a {
+    position: relative;
+    margin: 1px;
+    background-color: #28a4c9;
+    width: 100px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 2px;
+    display: block;
+}
