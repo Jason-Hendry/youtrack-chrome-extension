@@ -12,15 +12,15 @@
 <div role="tabpanel">
 
     <!-- Nav tabs -->
-    <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation"><a href="#inProgress" aria-controls="inProgress" role="tab" data-toggle="tab">In Progress</a></li>
-        <li role="presentation" class="active"><a href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
+    <ul class="nav nav-tabs" role="tablist" id="main-tabs">
+        <li role="presentation" class="active"><a href="#inProgress" aria-controls="inProgress" role="tab" data-toggle="tab">In Progress</a></li>
+        <li role="presentation"><a href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
         <li role="presentation"><a href="#scoreboard" aria-controls="scoreboard" role="tab" data-toggle="tab">Scoreboard</a></li>
     </ul>
 
     <!-- Tab panes -->
     <div class="tab-content">
-        <div role="tabpanel" class="tab-pane" id="inProgress">
+        <div role="tabpanel" class="tab-pane active" id="inProgress">
 
             <table class="table table-striped">
 
@@ -39,7 +39,7 @@
 
 
         </div>
-        <div role="tabpanel" class="tab-pane active" id="daily">
+        <div role="tabpanel" class="tab-pane" id="daily">
             Tasks Updated Today: <em id="dailyTasksUpdated"></em>
             <div id="daily-chart">
 

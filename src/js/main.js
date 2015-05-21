@@ -62,6 +62,13 @@ smsglobal.youtrack = smsglobal.youtrack || {};
         });
         y.loadDaily();
 
+        $('#main-tabs a').click(function() {
+            localStorage["lastTab"] = $(this).attr('href');
+        });
+        if(localStorage["lastTab"] != undefined) {
+            $('a[href="'+localStorage["lastTab"]+'"]').tab('show');
+        }
+
     };
     /**
      * @param search string|array
@@ -539,7 +546,8 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                                         "author": data[k].author.login,
                                         "start": data[k].date-(data[k].duration*1000*60),
                                         "end": data[k].date,
-                                        "duration": data[k].duration
+                                        "duration": data[k].duration,
+                                        "issue": xhr.issueId
                                     });
 
                                 }
@@ -683,9 +691,10 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 } else {
                     authorTimes[jobs[jobId].items[j].author] += jobs[jobId].items[j].duration;
                 }
-                var newTime = $('<span></span>');
+                var newTime = $('<a target="_blank"></a>');
                 newTime.attr('title',jobs[jobId].items[j].author);
                 newTime.html('&nbsp;')
+                newTime.attr('href',jobs[jobId].items[j].issue);
                 newTime.addClass(jobs[jobId].items[j].author.replace(/[^a-zA-Z]/,'_'));
                 newTime.width((jobs[jobId].items[j].duration /max * (chartWidth-minWidth)));
                 item.append(newTime);
