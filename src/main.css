@@ -8,8 +8,8 @@ body {
     width: 500px;
 }
 
-input[type=submit] {
-    margin-right: 20px;
+#save-message {
+    margin-left: 20px;
 }
 
 

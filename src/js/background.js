@@ -1,8 +1,16 @@
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.method == "getYouTrackUrl")
-        sendResponse({url: localStorage['url']});
-    else if (request.method == "getGitLabUrl")
-        sendResponse({url: localStorage['gitlab-url']});
-    else
+var settings = {};
+
+chrome.storage.sync.get(null, function(data) {
+    settings = data;
+});
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.method == "getSettings") {
+        sendResponse(settings);
+    } else if (request.method == "setSettings") {
+        settings = request.settings;
+        sendResponse('Done');
+    } else {
         sendResponse({}); // snub them.
+    }
 });

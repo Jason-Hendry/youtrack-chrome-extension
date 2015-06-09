@@ -91,16 +91,6 @@ issuePopover = function(issue) {
 // process.exit(1);
 
 
-var YouTrackRestUrl = null;
-var tablink = document.location.href+"";
-
-chrome.runtime.sendMessage({method: "getYouTrackUrl"}, function(response) {
-    YouTrackRestUrl = response.url;
-    YouTrackRestUrl = YouTrackRestUrl.replace(/\/$/, ''); // Trim trailing slash
-    if(tablink !== null && tablink.indexOf(YouTrackRestUrl) !== -1) {
-        initYouTrack();
-    }
-});
 
 function applyCommand(issue,command) {
     $.ajax(YouTrackRestUrl+'/rest/issue/'+issue+'/execute', {

@@ -1,14 +1,4 @@
-var GitLabUrl = null;
-var tablink = document.location.href + "";
-var youtrackRegex = new RegExp('((MXT|W|D|DW|BI|WEB)[- ]([0-9]+))', 'gi');
 
-chrome.runtime.sendMessage({method: "getGitLabUrl"}, function (response) {
-    GitLabUrl = response.url;
-    GitLabUrl = GitLabUrl.replace(/\/$/, ''); // Trim trailing slash
-    if (tablink !== null && tablink.indexOf(GitLabUrl) !== -1) {
-        initGitLab();
-    }
-});
 
 
 function findYouTrackLinks() {
@@ -42,15 +32,12 @@ function handleMergeRequest() {
 
         if (match = youtrackRegex.exec($('h4.title').text())) {
             getIssue(textToIssue(match[1]),function(data) {
-               if(data.State == 'Awaiting Deployment' || data.State == 'Code Review') {
-                   alert("Command applied to "+data.id+": State Awaiting Testing");
-                   applyCommand(data.id, "State Awaiting Testing");
-               } else {
-                   if(confirm(data.id+" not in valid state for deployment: "+data.State+' Apply Anyway')) {
-                       alert("Command applied to "+data.id+": State Awaiting Testing");
-                       applyCommand(data.id, "State Awaiting Testing");
-                   }
-               }
+                if(youTrackMergeCommand) {
+                    if (!youTrackCommandPrompt || confirm(data.id + " not in valid state for deployment: " + data.State + ' Apply Anyway')) {
+                        alert("Command applied to " + data.id + ": State Awaiting Testing");
+                        applyCommand(data.id, youTrackMergeCommand);
+                    }
+                }
             });
         }
     });

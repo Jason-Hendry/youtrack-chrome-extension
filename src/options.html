@@ -9,32 +9,61 @@
 <div class="container">
     <h1>YouTrack Extension Options</h1>
 
-    <p>To track times more accurately add an on break state (eg In Progress - On Break). You will also need a modified
-        Work Time workflow that allows tracking all jobs marking in progress then changed to any other status</p>
+    <!--<p>To track times more accurately add an on break state (eg In Progress - On Break). You will also need a modified-->
+    <!--Work Time workflow that allows tracking all jobs marking in progress then changed to any other status</p>-->
 
-    <form role="form">
-        <div class="form-group">
-            <label>YouTrack URL</label>
-            <input class="form-control" name="url">
+    <form role="form" id="settings">
+        <div class="well well-lg">
+            <h3>You Track</h3>
+
+            <div class="form-group">
+                <label>YouTrack URL</label>
+                <input class="form-control" name="url">
+            </div>
         </div>
-        <div class="form-group">
-            <label>Break State</label>
-            <input class="form-control" name="break_state">
+        <!--<div class="form-group">-->
+        <!--<label>Break State</label>-->
+        <!--<input class="form-control" name="break_state">-->
+        <!--</div>-->
+        <div class="well well-lg"><h3>Git Lab Options</h3>
+
+            <div class="form-group">
+                <label>GitLab URL</label>
+                <input class="form-control" name="gitlab_url">
+            </div>
+            <div class="form-group">
+                <label>Run YouTrack Command when Merge Request Accepted</label>
+                <input class="form-control" name="you_track_merge_command">
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="command_prompt" value="1">Prompt before running commands</label>
+            </div>
         </div>
-        <div class="form-group">
-            <label>GitLab URL</label>
-            <input class="form-control" name="gitlab-url">
+        <div class="well well-lg"><h3>Report Options</h3>
+
+            <div class="form-group">
+                <label>Author Colours</label>
+                <textarea class="form-control" name="author_colours"></textarea>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Author Colours</label>
-            <textarea class="form-control" name="author_colours"></textarea>
+        <input type="submit" class="btn btn-primary" value="Save">
+        <span id="save-message"></span>
+
+
+        <div class="form-group"><h3>Import / Export</h3>
+            <textarea class="form-control" id="export"></textarea>
+
         </div>
-        <input type="submit" class="btn btn-primary" value="Save"><span id="save-message"></span>
+        <input type="button" class="btn btn-default" value="Export">
+        <input type="button" class="btn btn-default" value="Import">
     </form>
+
 
 </div>
 <script src="js/jquery.js" type="application/javascript"></script>
 <script src="js/bootstrap.min.js" type="application/javascript"></script>
+<script src="js/jquery.serializeObject.js" type="application/javascript"></script>
 <script src="js/options.js" type="application/javascript"></script>
 </body>
 </html>

@@ -8,7 +8,8 @@
     },
     "permissions": [
         "http://*/",
-        "tabs"
+        "tabs",
+        "storage"
     ],
     "browser_action": {
         "default_icon": "youtrack32-h-57353868.png",
@@ -24,7 +25,8 @@
                 "js/moment.min.js",
                 "js/moment-timezone-with-data-2010-2020.min.js",
                 "js/youtrack.js",
-                "js/gitlab.js"
+                "js/gitlab.js",
+                "js/content-settings.js"
             ],
             "css": [
                 "css/youtrack.css",
