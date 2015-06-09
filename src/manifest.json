@@ -21,13 +21,14 @@
             ],
             "js": [
                 "js/jquery.js",
-                "js/moment-timezone.js",
+                "js/moment.min.js",
                 "js/moment-timezone-with-data-2010-2020.min.js",
                 "js/youtrack.js",
                 "js/gitlab.js"
             ],
             "css": [
-                "css/youtrack.css"
+                "css/youtrack.css",
+                "css/issue.css"
             ]
         }
     ],
@@ -37,5 +38,8 @@
             "js/background.js"
         ]
     },
-    "options_page": "options.html"
+    "options_page": "options.html",
+    "web_accessible_resources": [
+        "youtrack32-h-57353868.png"
+    ]
 }

@@ -694,7 +694,7 @@ smsglobal.youtrack = smsglobal.youtrack || {};
                 var newTime = $('<a target="_blank"></a>');
                 newTime.attr('title',jobs[jobId].items[j].author);
                 newTime.html('&nbsp;')
-                newTime.attr('href',jobs[jobId].items[j].issue);
+                newTime.attr('href', y.baseRestUrl+'/issue/'+jobs[jobId].items[j].issue);
                 newTime.addClass(jobs[jobId].items[j].author.replace(/[^a-zA-Z]/,'_'));
                 newTime.width((jobs[jobId].items[j].duration /max * (chartWidth-minWidth)));
                 item.append(newTime);

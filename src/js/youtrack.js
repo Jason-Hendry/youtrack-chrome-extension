@@ -96,7 +96,7 @@ var tablink = document.location.href+"";
 
 chrome.runtime.sendMessage({method: "getYouTrackUrl"}, function(response) {
     YouTrackRestUrl = response.url;
-    console.log(YouTrackRestUrl);
+    YouTrackRestUrl = YouTrackRestUrl.replace(/\/$/, ''); // Trim trailing slash
     if(tablink !== null && tablink.indexOf(YouTrackRestUrl) !== -1) {
         initYouTrack();
     }
@@ -133,7 +133,6 @@ function addTask() {
             addSubtask(parentTask, summary);
             var issue = data.getElementsByTagName('issue')[0].id;
             applyCommand(issue,"subtask of "+parentTask);
-
         }
     });
 }
@@ -218,51 +217,4 @@ function markInProgress() {
 
 function initYouTrack() {
 
-    if ($('.sb-board-name').text().match(/Agile Board/)) {
-
-        $('.sb-task-subTasks').each(function () {
-            var $task = $('<input>');
-            $task.attr('placeholder', 'New Subtask');
-            $task.click(function (event) {
-                event.stopPropagation();
-            });
-            $task.mousedown(function (event) {
-                event.stopPropagation();
-            });
-            $task.keypress(function (e) {
-                if (e.which == 13) {
-                    addTask.apply(this);
-                }
-            });
-            var $li = $('<li>');
-            $li.addClass('sg-new-item');
-            $li.append($task);
-
-            $(this).append($li);
-        });
-
-        $('.sb-task-subtask-item').each(function () {
-            if ($(this).hasClass('sg-in-progress')) {
-                var $start = $('<button>');
-                $start.attr('data-src', $(this).attr('id'));
-                $start.text('✓');
-                $start.attr('title', 'Mark Fixed');
-                $start.addClass('sg-button');
-                $start.click(markFixed);
-                $(this).prepend($start);
-            } else if ($(this).find('.sb-issue-resolved').length) {
-
-            } else {
-                var $start = $('<button>');
-                $start.attr('data-src', $(this).attr('id'));
-                $start.text('▶');
-                $start.attr('title', 'Mark In Progress');
-                $start.addClass('sg-button');
-                $start.click(markInProgress);
-                $(this).prepend($start);
-            }
-        });
-
-        findInProgress();
-    }
 }

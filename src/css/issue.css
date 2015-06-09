@@ -8,6 +8,7 @@
     background-color: #ffffff;
     padding: 2px;
     border: 1px solid #ccc;
+    z-index: 9999;
 }
 
 .issueDetailsPopup {
