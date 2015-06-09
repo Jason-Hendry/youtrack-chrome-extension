@@ -17,7 +17,7 @@ function findYouTrackLinks() {
     var $title = $('h4.title');
     if (match = youtrackRegex.exec($title.text())) {
         if($title.find('.you-track').length == 0) {
-            $title.html($title.html().replace(match[1], match[1] + ' <a class="you-track" data-src="'+textToIssue(match[1])+'" href="' + YouTrackRestUrl + '/issue/' + textToIssue(match[1]) + '"><img class="icon-youtrack" src="' + chrome.extension.getURL("youtrack32-h-57353868.png") + '"></a>'));
+            $title.html($title.html().replace(match[1], match[1] + ' <a target="_blank" class="you-track" data-src="'+textToIssue(match[1])+'" href="' + YouTrackRestUrl + '/issue/' + textToIssue(match[1]) + '"><img class="icon-youtrack" src="' + chrome.extension.getURL("youtrack32-h-57353868.png") + '"></a>'));
         }
     }
     // Commit List on merge request Page
@@ -26,7 +26,7 @@ function findYouTrackLinks() {
             youtrackRegex.lastIndex = 0; // Reset Regex
             match = youtrackRegex.exec($(this).text());
             if (match) {
-                $(this).html($(this).html().replace(match[1], match[1]+' <a class="you-track" data-src="'+textToIssue(match[1])+'" href="' + YouTrackRestUrl + '/issue/' + textToIssue(match[1]) + '"><img class="icon-youtrack" src="' + chrome.extension.getURL("youtrack32-h-57353868.png") + '"></a>'));
+                $(this).html($(this).html().replace(match[1], match[1]+' <a target="_blank" class="you-track" data-src="'+textToIssue(match[1])+'" href="' + YouTrackRestUrl + '/issue/' + textToIssue(match[1]) + '"><img class="icon-youtrack" src="' + chrome.extension.getURL("youtrack32-h-57353868.png") + '"></a>'));
             }
         }
     });
