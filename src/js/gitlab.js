@@ -4,14 +4,8 @@
 function findYouTrackLinks() {
     var match = [];
     youtrackRegex.lastIndex = 0; // Reset Regex
-    var $title = $('h4.title');
-    if (match = youtrackRegex.exec($title.text())) {
-        if($title.find('.you-track').length == 0) {
-            $title.html($title.html().replace(match[1], match[1] + ' <a target="_blank" class="you-track" data-src="'+textToIssue(match[1])+'" href="' + YouTrackRestUrl + '/issue/' + textToIssue(match[1]) + '"><img class="icon-youtrack" src="' + chrome.extension.getURL("youtrack32-h-57353868.png") + '"></a>'));
-        }
-    }
     // Commit List on merge request Page
-    $('a.commit-row-message, a.row_title').each(function () {
+    $('div.commit-row-title, a.row_title, h4.title, div.event-note').each(function () {
         if($(this).find('.you-track').length == 0) {
             youtrackRegex.lastIndex = 0; // Reset Regex
             match = youtrackRegex.exec($(this).text());
@@ -27,14 +21,13 @@ function textToIssue(text) {
     return text.toUpperCase().replace(' ','-');
 }
 
-function handleMergeRequest() {
+function handleAcceptMergeRequest() {
     $('body').on('click','input.accept_merge_request',function() {
-
+        youtrackRegex.lastIndex = 0;
         if (match = youtrackRegex.exec($('h4.title').text())) {
             getIssue(textToIssue(match[1]),function(data) {
                 if(youTrackMergeCommand) {
-                    if (!youTrackCommandPrompt || confirm(data.id + " not in valid state for deployment: " + data.State + ' Apply Anyway')) {
-                        alert("Command applied to " + data.id + ": State Awaiting Testing");
+                    if (!youTrackCommandPrompt || confirm(data.id + ' apply command: ' + youTrackMergeCommand)) {
                         applyCommand(data.id, youTrackMergeCommand);
                     }
                 }
@@ -42,6 +35,25 @@ function handleMergeRequest() {
         }
     });
 }
+
+function handleCreateMergeRequest() {
+    $('.flash-notice').each(function() {
+        if($(this).text().indexOf('Merge request was successfully created.') == -1) {
+            return;
+        }
+        youtrackRegex.lastIndex = 0;
+        if (match = youtrackRegex.exec($('h4.title').text())) {
+            getIssue(textToIssue(match[1]),function(data) {
+                if(youTrackCreateMergeCommand) {
+                    if (!youTrackCommandPrompt || confirm(data.id + ' apply command: ' + youTrackCreateMergeCommand)) {
+                        applyCommand(data.id, youTrackCreateMergeCommand, document.location.href);
+                    }
+                }
+            });
+        }
+    });
+}
+
 
 function youTrackLinkHover() {
     $('body')
@@ -88,7 +100,8 @@ function initGitLab() {
 
     findYouTrackLinks();
     youTrackLinkHover();
-    handleMergeRequest();
+    handleAcceptMergeRequest();
+    handleCreateMergeRequest();
     observeBody();
 
 }

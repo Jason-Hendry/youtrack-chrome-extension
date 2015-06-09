@@ -92,13 +92,20 @@ issuePopover = function(issue) {
 
 
 
-function applyCommand(issue,command) {
+function applyCommand(issue,command, comment) {
+    var dataComment = false;
+    if(comment !== undefined) {
+        dataComment = {
+            'command': command,
+            'comment': comment
+        }
+    }
     $.ajax(YouTrackRestUrl+'/rest/issue/'+issue+'/execute', {
         method: 'POST',
         crossDomain: true,
-        data: {
+        data: (dataComment ? dataComment : {
             'command': command
-        },
+        }),
         success: function(data,arg2,arg3) {
             console.log(data,arg2,arg3);
         }
